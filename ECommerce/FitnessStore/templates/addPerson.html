@@ -25,6 +25,11 @@
                   </tr>
             </table>
         </form>
+        {% if err %}
+        <div class="alert alert-danger w-25 container" role="alert" name="{{ err }}">
+            This is a primary alert—check it out!
+        </div>
+        {% endif %}
         </div>
     </div>
 {%endblock%}

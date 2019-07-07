@@ -10,5 +10,9 @@ urlpatterns = [
     path('addPerson/', views.AddPerson),
     path('custlist/', views.showCust),
     path('persons/editp/<int:id>', views.editPerson),
-    path('strengthproducts/', views.strengthProd)
+    path('strengthproducts/', views.strengthProd),
+    path('login/', views.login),
+    path("login/loginvalidate", views.loginvalidate),
+    path("strengthproducts/addtocart/<int:id>",views.addtocart),
+    path("showallcartitems/",views.showcart),
 ]

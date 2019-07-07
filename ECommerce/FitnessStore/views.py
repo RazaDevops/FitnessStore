@@ -1,6 +1,7 @@
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, HttpResponse, redirect, HttpResponseRedirect
 from FitnessStore.models import Person, custinfo, strengthprod
 from FitnessStore.forms import PersonForm, custregister
+from django.contrib import messages
 
 def demo(request):
     return render(request, "index.html", {})
@@ -21,12 +22,14 @@ def AddPerson(request):
         id = request.POST["pid"]
         pnames = request.POST["pname"]
         plocation = request.POST["ploc"]
-        #p = Person.objects.get(id=id)
-        #if(p==None):
-        p = Person(id,pnames,plocation)
-        p.save()
-        '''else:
-            return HttpResponse("Id Already Exist, Please try another one")
+        p = Person.objects.get(id=id)
+        if(p==None):
+            p = Person(id,pnames,plocation)
+            p.save()
+        else:
+            return HttpResponse("Id Exists!")
+            #return render(request, "addPerson.html", {"err":err})
+            #return HttpResponseRedirect("/FitnessStore/addPerson/")
             #return redirect(AddPerson)'''
         return redirect(ShowPersons)
 
@@ -50,22 +53,35 @@ def userLogin(request):
     else:
         return HttpResponse("Wrong Credentials")
 
+###############################Customer Sections#############################################
 
 def custRegister(request):
+    form = custregister(request.POST)
     if(request.method=="GET"):
-        return render(request,"usersignin.html",{})
-    else:
-        cid = request.POST['cid']
+        return render(request,"custregister.html",{})
+
+    if(form.is_valid):
+        form.save()
         cfname = request.POST["cfname"]
-        clname = request.POST["clname"]
         cmail = request.POST["cmail"]
         cpass = request.POST["cpass"]
-        cdob = request.POST["cdob"]
         ccontact = request.POST["ccontact"]
-        cgender = request.POST["cgender"]
-        cust = custinfo(cid,cfname,clname,cmail,cpass,cdob,ccontact,cgender)
-        cust.save()
-        return redirect(showCust)
+        form = custinfo(cfname,cmail,cpass,ccontact)
+    return redirect(showCust)
+
+def login(request):
+    return render(request,"userlogin.html",{})
+
+def loginvalidate(request):
+    if(request.method=="POST"):
+        uname = request.POST.get("uname")
+        pwd = request.POST.get("pwd")        
+        result = custinfo.objects.filter(cmail=uname,cpass=pwd)
+        if(result != None):
+            request.session["cmail"]=uname
+            return redirect(demo)
+        else:
+            return redirect(login)
 
 def showCust(request):
     custs = custinfo.objects.all()
@@ -77,4 +93,33 @@ def strengthProd(request):
     strenprod = strengthprod.objects.all()
     return render(request, "strengthproducts.html", {"stren":strenprod})
 
+
+################################Cart#############################################
+def addtocart(request,id):  
+    #Cart.objects.all().delete()     
+    user = custinfo.objects.get(uname=request.session["uname"])
+    #query returns 1 record
+    prod = strengthProd.objects.get(id=id)    
+    data = Cart.objects.filter(user=user,prod=prod)
+    #Item is not present in cart
+    if(data.count()==0):
+        mycart = Cart()    
+        mycart.user = user
+        mycart.prod = prod
+        mycart.save()
+    return redirect(strengthProd)
+
+def showcart(request):
+    user = custinfo.objects.get(uname=request.session["uname"])
+    cart_items = Cart.objects.filter(user=user.id)
+    prods = []    
+    total = 0
+    for c in cart_items:
+        c1 = strengthprod.objects.get(id=c.strengthprod.id)
+        total = total + c1.stprodprice
+        prods.append(c1)
+    
+    request.session["total"] = total
+    print(request.session["total"])
+    return render(request,"cart.html",{"emps" : prods,"total":total})
 

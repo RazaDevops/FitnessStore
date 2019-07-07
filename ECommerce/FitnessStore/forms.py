@@ -15,4 +15,4 @@ class PersonForm(forms.ModelForm):
 class custregister(forms.ModelForm):
     class Meta:
         model = custinfo
-        fields = "__all__"
+        fields = '__all__' #('cfname','cpass','cmail','ccontact')
